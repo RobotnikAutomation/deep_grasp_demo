@@ -69,6 +69,7 @@ void GraspDetection::loadParameters()
 
   errors += !rosparam_shortcuts::get(LOGNAME, pnh, "action_name", action_name_);
   errors += !rosparam_shortcuts::get(LOGNAME, pnh, "frame_id", frame_id_);
+  errors += !rosparam_shortcuts::get(LOGNAME, pnh, "camera_optical_frame", camera_optical_frame_);
   errors += !rosparam_shortcuts::get(LOGNAME, pnh, "image_dir", image_dir_);
   errors += !rosparam_shortcuts::get(LOGNAME, pnh, "trans_cam_opt", transform_cam_opt_);
   errors += !rosparam_shortcuts::get(LOGNAME, pnh, "trans_base_cam", trans_base_cam_);
@@ -97,6 +98,9 @@ void GraspDetection::init()
     image_client_ = nh_.serviceClient<moveit_task_constructor_dexnet::Images>("save_images");
     ros::service::waitForService("save_images", ros::Duration(3.0));
   }
+
+  // TF Listener
+  tf_listener_ = new  tf2_ros::TransformListener(tf_buffer_);
 }
 
 void GraspDetection::goalCallback()
@@ -164,6 +168,20 @@ void GraspDetection::sampleGrasps()
       return;
     }
 
+    // obtain transform from base link to camera optical frame
+
+    try{
+      trans_base_cam_opt_ = tf_buffer_.lookupTransform(frame_id_,camera_optical_frame_,ros::Time(0),ros::Duration(1.0));
+    }
+    catch(tf2::TransformException ex){
+      ROS_ERROR_NAMED(LOGNAME, "Lookup transform error between base link and camera optical frame");
+      result_.grasp_state = "failed";
+      server_->setAborted(result_);
+    }
+
+    eigen_base_cam_opt_ = tf2::transformToEigen(trans_base_cam_opt_);
+
+
     for (unsigned int i = 0; i < grasp_candidates.size(); i++)
     {
       // transform grasp from camera optical link into frame_id (panda_link0)
@@ -176,7 +194,8 @@ void GraspDetection::sampleGrasps()
                              grasp_candidates.at(i).pose.orientation.y, grasp_candidates.at(i).pose.orientation.z);
 
       // the 6dof grasp pose in frame_id (panda_link0)
-      const Eigen::Isometry3d transform_base_grasp = trans_base_cam_ * transform_cam_opt_ * transform_opt_grasp;
+      /* const Eigen::Isometry3d transform_base_grasp = trans_base_cam_ * transform_cam_opt_ * transform_opt_grasp; */
+      const Eigen::Isometry3d transform_base_grasp = eigen_base_cam_opt_ * transform_opt_grasp;
       const Eigen::Vector3d trans = transform_base_grasp.translation();
       const Eigen::Quaterniond rot(transform_base_grasp.rotation());
 

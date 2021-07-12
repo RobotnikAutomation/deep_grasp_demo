@@ -45,6 +45,12 @@
 #include <moveit_task_constructor_msgs/SampleGraspPosesAction.h>
 #include <actionlib/server/simple_action_server.h>
 
+// Transform Listener
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_eigen/tf2_eigen.h>
+#include <ros/ros.h>
+
 namespace moveit_task_constructor_dexnet
 {
 constexpr char LOGNAME[] = "grasp_image_detection";
@@ -115,12 +121,18 @@ private:
   std::string goal_name_;    // action name
   std::string action_name_;  // action namespace
   std::string frame_id_;     // frame of point cloud/grasps
+  std::string camera_optical_frame_; // camera depth optical frame link name
 
   std::string image_dir_;         // directory images saved
   std::string color_image_file_;  // file path to color image
   std::string depth_image_file_;  // file path to depth image
 
   bool load_images_;  // load images from file
+
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener* tf_listener_;
+  geometry_msgs::TransformStamped trans_base_cam_opt_; // transformation from base link to optical link
+  Eigen::Isometry3d eigen_base_cam_opt_;
 
   Eigen::Isometry3d trans_base_cam_;     // transformation from base link to camera link
   Eigen::Isometry3d transform_cam_opt_;  // transformation from camera link to optical link

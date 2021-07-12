@@ -1,0 +1,12 @@
+[submodule "dexnet_deps/gqcnn"]
+	path = dexnet_deps/gqcnn
+	url = https://github.com/RobotnikAutomation/gqcnn
+[submodule "dexnet_deps/perception"]
+	path = dexnet_deps/perception
+	url = https://github.com/RobotnikAutomation/perception
+[submodule "dexnet_deps/autolab_core"]
+	path = dexnet_deps/autolab_core
+	url = https://github.com/RobotnikAutomation/autolab_core
+[submodule "dexnet_deps/visualization"]
+	path = dexnet_deps/visualization
+	url = https://github.com/RobotnikAutomation/visualization

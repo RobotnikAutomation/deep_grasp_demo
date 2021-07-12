@@ -77,6 +77,15 @@ void GraspDetection::loadParameters()
   errors += !rosparam_shortcuts::get(LOGNAME, pnh, "action_name", action_name_);
   errors += !rosparam_shortcuts::get(LOGNAME, pnh, "view_point", view_point_);
   errors += !rosparam_shortcuts::get(LOGNAME, pnh, "frame_id", frame_id_);
+  errors += !rosparam_shortcuts::get(LOGNAME, pnh, "camera_optical_frame", camera_optical_frame_);
+  errors += !rosparam_shortcuts::get(LOGNAME, pnh, "remove_table", remove_table_);
+  errors += !rosparam_shortcuts::get(LOGNAME, pnh, "cartesian_limits", cartesian_limits_);
+  if (cartesian_limits_)
+  {
+    errors += !rosparam_shortcuts::get(LOGNAME, pnh, "xyz_lower_limits", xyz_lower_limits_);
+    errors += !rosparam_shortcuts::get(LOGNAME, pnh, "xyz_upper_limits", xyz_upper_limits_);
+  }
+
   rosparam_shortcuts::shutdownIfError(LOGNAME, errors);
 }
 
@@ -106,6 +115,9 @@ void GraspDetection::init()
 
   // Grasp detector
   grasp_detector_.reset(new gpd::GraspDetector(path_to_gpd_config_));
+
+  // TF Listener
+  tf_listener_ = new  tf2_ros::TransformListener(tf_buffer_);
 }
 
 void GraspDetection::goalCallback()
@@ -133,7 +145,6 @@ void GraspDetection::sampleGrasps()
   std::vector<std::unique_ptr<gpd::candidate::Hand>> grasps;  // detect grasp poses
   grasp_detector_->preprocessPointCloud(*cloud_camera_);      // preprocess the point cloud
   grasps = grasp_detector_->detectGrasps(*cloud_camera_);     // detect grasps in the point cloud
-
   // Use grasps with score > 0
   std::vector<unsigned int> grasp_id;
   for (unsigned int i = 0; i < grasps.size(); i++)
@@ -152,13 +163,31 @@ void GraspDetection::sampleGrasps()
     return;
   }
 
+  // obtain transform from base link to camera optical frame
+
+  try{
+    
+    trans_base_cam_opt_ = tf_buffer_.lookupTransform(frame_id_,camera_optical_frame_,ros::Time(0),ros::Duration(1.0));
+    
+  }
+  catch(tf2::TransformException ex){
+    ROS_ERROR_NAMED(LOGNAME, "Lookup transform error between base link and camera optical frame");
+    result_.grasp_state = "failed";
+    server_->setAborted(result_);
+  }
+
+  eigen_base_cam_opt_ = tf2::transformToEigen(trans_base_cam_opt_);
+
+  
+
   for (auto id : grasp_id)
   {
     // transform grasp from camera optical link into frame_id (panda_link0)
     const Eigen::Isometry3d transform_opt_grasp =
         Eigen::Translation3d(grasps.at(id)->getPosition()) * Eigen::Quaterniond(grasps.at(id)->getOrientation());
 
-    const Eigen::Isometry3d transform_base_grasp = trans_base_cam_ * transform_cam_opt_ * transform_opt_grasp;
+    /* const Eigen::Isometry3d transform_base_grasp = trans_base_cam_ * transform_cam_opt_ * transform_opt_grasp; */
+    const Eigen::Isometry3d transform_base_grasp = eigen_base_cam_opt_ * transform_opt_grasp;
     const Eigen::Vector3d trans = transform_base_grasp.translation();
     const Eigen::Quaterniond rot(transform_base_grasp.rotation());
 
@@ -194,7 +223,17 @@ void GraspDetection::cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg
     pcl::fromROSMsg(*msg.get(), *cloud.get());
 
     // Segementation works best with XYXRGB
-    removeTable(cloud);
+    if (remove_table_)
+    {
+      removeTable(cloud);
+    }
+
+    // Filter cloud 
+
+    if (cartesian_limits_)
+    {
+      passThroughFilter(xyz_lower_limits_, xyz_upper_limits_, cloud);
+    }
 
     // publish the cloud for visualization and debugging purposes
     sensor_msgs::PointCloud2 cloud_msg;

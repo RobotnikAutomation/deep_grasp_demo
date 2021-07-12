@@ -54,6 +54,12 @@
 #include <moveit_task_constructor_msgs/SampleGraspPosesAction.h>
 #include <actionlib/server/simple_action_server.h>
 
+// Transform Listener
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_eigen/tf2_eigen.h>
+#include <ros/ros.h>
+
 namespace moveit_task_constructor_gpd
 {
 constexpr char LOGNAME[] = "grasp_pose_detection";
@@ -131,13 +137,24 @@ private:
   std::string goal_name_;           // action name
   std::string action_name_;         // action namespace
   std::string frame_id_;            // frame of point cloud/grasps
+  std::string camera_optical_frame_; // camera depth optical frame link name
 
+  std::vector<double> xyz_lower_limits_;  // lower limits on point cloud
+  std::vector<double> xyz_upper_limits_;  // upper limits on point cloud
+  bool cartesian_limits_;  // specify if to remove points outside limits
+  bool remove_table_;      // specify if to remove table points
+  
   bool goal_active_;  // action goal status
   bool load_cloud_;   // load cloud from file
 
   std::vector<double> view_point_;                      // origin of the camera
   std::unique_ptr<gpd::GraspDetector> grasp_detector_;  // used to run the GPD algorithm
   std::unique_ptr<gpd::util::Cloud> cloud_camera_;      // stores point cloud with (optional) camera information
+
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener* tf_listener_;
+  geometry_msgs::TransformStamped trans_base_cam_opt_; // transformation from base link to optical link
+  Eigen::Isometry3d eigen_base_cam_opt_;
 
   Eigen::Isometry3d trans_base_cam_;     // transformation from base link to camera link
   Eigen::Isometry3d transform_cam_opt_;  // transformation from camera link to optical link

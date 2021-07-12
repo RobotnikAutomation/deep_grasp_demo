@@ -20,6 +20,7 @@
   <depend>rosparam_shortcuts</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
+  <depend>tf2_ros</depend>
   <exec_depend>message_runtime</exec_depend>
   <!-- <exec_depend version_gte="0.7.4">panda_moveit_config</exec_depend> -->
 </package>

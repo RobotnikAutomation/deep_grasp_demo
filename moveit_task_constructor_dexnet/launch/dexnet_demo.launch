@@ -1,37 +1,41 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="load_images" default="true" doc="load images from file"/>
+  <arg name="load_images" default="false" doc="load images from file"/>
+  <arg name="joint_states_ns" default="/j2s6s200_driver/out/joint_state"/>
 
   <arg name="action_name" value="generate_grasps" doc="action name space"/>
-  <arg name="frame_id" value="panda_link0" doc="frame of the grasps sent to MTC"/>
+  <arg name="frame_id" value="world" doc="frame of the grasps sent to MTC"/>
 
   <!-- file paths -->
-  <arg name="camera_calib_intr" value="$(find deep_grasp_task)/config/calib/camera.intr" doc="file path to camera intrinsics"/>
+  <arg name="robot_config" value="$(find deep_grasp_task)/config/jaco_object.yaml" doc="file path to robot configuration"/>
+  <arg name="camera_config" value="$(find deep_grasp_task)/config/calib/realsense_camera.yaml" doc="file path to camera configuration"/>
+  <arg name="camera_calib_intr" value="$(find deep_grasp_task)/config/calib/realsense_camera.intr" doc="file path to camera intrinsics"/>
   <arg name="dexnet_model_config" value="$(find moveit_task_constructor_dexnet)/config/dexnet_config.yaml" doc="dex-net model"/>
   <arg name="dexnet_policy_script" value="$(find moveit_task_constructor_dexnet)/scripts/grasp_detector" doc="execute dexnet policy in python3"/>
   <arg name="sampled_grasps" value="$(find moveit_task_constructor_dexnet)/data/grasps/grasp_candidates.bin" doc="file path to pickled grasp candidates"/>
   <arg name="image_dir" value="$(find moveit_task_constructor_dexnet)/data/images/" doc="directory to save images"/>
 
-  <arg if="$(arg load_images)" name="color_image_file" value="rgb_cylinder.png" doc="color image file"/>
-  <arg if="$(arg load_images)" name="depth_image_file" value="depth_cylinder.png" doc="depth image file"/>
+  <arg if="$(arg load_images)" name="color_image_file" value="rgb_berry.png" doc="color image file"/>
+  <arg if="$(arg load_images)" name="depth_image_file" value="depth_berry.png" doc="depth image file"/>
   <!-- <arg if="$(arg load_images)" name="color_image_file" value="rgb_clamp.png" doc="color image file"/>
   <arg if="$(arg load_images)" name="depth_image_file" value="depth_clamp.png" doc="depth image file"/> -->
 
-  <arg unless="$(arg load_images)" name="color_img_topic" value="/camera/rgb/image_raw" doc="topic name for raw color image"/>
-  <arg unless="$(arg load_images)" name="depth_img_topic" value="/camera/depth/image_raw" doc="topic name for raw depth image"/>
+  <arg unless="$(arg load_images)" name="color_img_topic" value="/camera/color/image_raw" doc="topic name for raw color image"/>
+  <arg unless="$(arg load_images)" name="depth_img_topic" value="/camera/depth/image_rect" doc="topic name for raw depth image"/>
 
   <!-- Run MTC pick and place -->
   <node name="mtc_tutorial" pkg="deep_grasp_task" type="deep_grasp_demo" output="screen">
       <param name="execute" value="true" />
       <param name="action_name" value="$(arg action_name)"/>
-      <rosparam command="load" file="$(find deep_grasp_task)/config/panda_object.yaml" />
+      <rosparam command="load" file="$(arg robot_config)"/>
+      <remap from="/joint_states" to="$(arg joint_states_ns)" />
   </node>
 
   <!-- Grasp detection using GQCNN and Dex-Net data sets -->
   <node name="grasp_image_detection" pkg="moveit_task_constructor_dexnet" type="grasp_image_detection" output="screen">
     <param if="$(arg load_images)" name="color_image_file" value="$(arg color_image_file)"/>
     <param if="$(arg load_images)" name="depth_image_file" value="$(arg depth_image_file)"/>
-    <rosparam command="load" file="$(find deep_grasp_task)/config/calib/camera.yaml" />
+    <rosparam command="load" file="$(arg camera_config)"/>
     <param name="action_name" value="$(arg action_name)"/>
     <param name="frame_id" value="$(arg frame_id)"/>
     <param name="image_dir" value="$(arg image_dir)"/>

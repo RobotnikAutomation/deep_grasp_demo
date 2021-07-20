@@ -66,6 +66,10 @@
 #include <moveit_task_constructor_msgs/ExecuteTaskSolutionAction.h>
 #include <moveit_task_constructor_msgs/SampleGraspPosesAction.h>
 
+// C++
+#include <iostream>
+#include <vector>
+
 namespace deep_grasp_task
 {
 using namespace moveit::task_constructor;
@@ -95,6 +99,7 @@ private:
   std::string eef_name_;
   std::string hand_group_name_;
   std::string hand_frame_;
+  std::vector<std::string> finger_tip_names_;
 
   // object + surface
   std::vector<std::string> support_surfaces_;

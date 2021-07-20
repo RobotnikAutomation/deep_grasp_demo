@@ -64,7 +64,7 @@ void DeepPickPlaceTask::loadParameters()
   errors += !rosparam_shortcuts::get(LOGNAME, pnh, "hand_frame", hand_frame_);
   errors += !rosparam_shortcuts::get(LOGNAME, pnh, "world_frame", world_frame_);
   errors += !rosparam_shortcuts::get(LOGNAME, pnh, "grasp_frame_transform", grasp_frame_transform_);
-
+  errors += !rosparam_shortcuts::get(LOGNAME, pnh, "finger_tip_names", finger_tip_names_);
   // Predefined pose targets
   errors += !rosparam_shortcuts::get(LOGNAME, pnh, "hand_open_pose", hand_open_pose_);
   errors += !rosparam_shortcuts::get(LOGNAME, pnh, "hand_close_pose", hand_close_pose_);
@@ -112,7 +112,7 @@ void DeepPickPlaceTask::init()
   auto cartesian_planner = std::make_shared<solvers::CartesianPath>();
   cartesian_planner->setMaxVelocityScaling(1.0);
   cartesian_planner->setMaxAccelerationScaling(1.0);
-  cartesian_planner->setStepSize(.001);
+  cartesian_planner->setStepSize(.01);
 
   // Set task properties
   t.setProperty("group", arm_group_name_);
@@ -230,6 +230,7 @@ void DeepPickPlaceTask::init()
       stage->allowCollisions(
           object, t.getRobotModel()->getJointModelGroup(hand_group_name_)->getLinkModelNamesWithCollisionGeometry(),
           true);
+      stage->allowCollisions(object, finger_tip_names_ ,true);
       grasp->insert(std::move(stage));
     }
 
@@ -237,8 +238,9 @@ void DeepPickPlaceTask::init()
   ---- *               Close Hand                      *
      ***************************************************/
     {
-      auto stage = std::make_unique<stages::MoveTo>("close hand", sampling_planner);
-      stage->properties().property("group").configureInitFrom(Stage::PARENT, hand_group_name_);
+      auto stage = std::make_unique<stages::MoveTo>("Close", sampling_planner);
+      stage->setGroup(hand_group_name_);
+
       stage->setGoal(hand_close_pose_);
       grasp->insert(std::move(stage));
     }
@@ -279,6 +281,7 @@ void DeepPickPlaceTask::init()
       stage->setDirection(vec);
       grasp->insert(std::move(stage));
     }
+    
 
     /****************************************************
   .... *               Forbid collision (object support)  *
@@ -365,8 +368,8 @@ void DeepPickPlaceTask::init()
   ---- *          Open Hand                              *
      *****************************************************/
     {
-      auto stage = std::make_unique<stages::MoveTo>("open hand", sampling_planner);
-      stage->properties().property("group").configureInitFrom(Stage::PARENT, hand_group_name_);
+      auto stage = std::make_unique<stages::MoveTo>("Open", sampling_planner);
+      stage->setGroup(hand_group_name_);
       stage->setGoal(hand_open_pose_);
       place->insert(std::move(stage));
     }
@@ -379,6 +382,7 @@ void DeepPickPlaceTask::init()
       stage->allowCollisions(
           object_name_,
           t.getRobotModel()->getJointModelGroup(hand_group_name_)->getLinkModelNamesWithCollisionGeometry(), false);
+      stage->allowCollisions(object, finger_tip_names_ ,false);
       place->insert(std::move(stage));
     }
 
@@ -449,14 +453,14 @@ bool DeepPickPlaceTask::plan()
 }
 
 bool DeepPickPlaceTask::execute()
-{
+{ 
   ROS_INFO_NAMED(LOGNAME, "Executing solution trajectory");
   moveit_task_constructor_msgs::ExecuteTaskSolutionGoal execute_goal;
   task_->solutions().front()->fillMessage(execute_goal.solution);
   execute_.sendGoal(execute_goal);
   execute_.waitForResult();
   moveit_msgs::MoveItErrorCodes execute_result = execute_.getResult()->error_code;
-
+  
   if (execute_result.val != moveit_msgs::MoveItErrorCodes::SUCCESS)
   {
     ROS_ERROR_STREAM_NAMED(LOGNAME, "Task execution failed and returned: " << execute_.getState().toString());

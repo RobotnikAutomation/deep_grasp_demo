@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
 	moveit_task_constructor_msgs
   roscpp
 	rosparam_shortcuts
+  sensor_msgs
 )
 
 ###################################
@@ -29,6 +30,7 @@ catkin_package(
  CATKIN_DEPENDS
 	moveit_task_constructor_msgs
  	roscpp
+  sensor_msgs
 )
 
 ###########

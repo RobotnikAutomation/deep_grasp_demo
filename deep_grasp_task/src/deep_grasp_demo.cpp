@@ -52,12 +52,20 @@
 #include <moveit_task_constructor_msgs/SampleGraspPosesAction.h>
 #include <actionlib/client/simple_action_client.h>
 
+#include <rviz_visual_tools/rviz_visual_tools.h>
+
 constexpr char LOGNAME[] = "deep_grasp_demo";
 
 void spawnObject(moveit::planning_interface::PlanningSceneInterface& psi, const moveit_msgs::CollisionObject& object)
 {
   if (!psi.applyCollisionObject(object))
     throw std::runtime_error("Failed to spawn object: " + object.id);
+}
+
+bool allow_execute = 0;
+
+void execute_callback(const sensor_msgs::Joy& msg){
+  allow_execute = msg.buttons[2];
 }
 
 moveit_msgs::CollisionObject createTable()
@@ -221,13 +229,22 @@ int main(int argc, char** argv)
   deep_pick_place_task.loadParameters();
   deep_pick_place_task.init();
 
+  // Create Rviz subscriber
+  ros::Subscriber rviz_sub = nh.subscribe("/rviz_visual_tools_gui",1000, execute_callback);
+
   if (deep_pick_place_task.plan())
   {
     ROS_INFO_NAMED(LOGNAME, "Planning succeded");
     if (pnh.param("execute", false))
     {
-      deep_pick_place_task.execute();
-      ROS_INFO_NAMED(LOGNAME, "Execution complete");
+      while(true){
+       if(allow_execute == true){ 
+        deep_pick_place_task.execute();
+        ROS_INFO_NAMED(LOGNAME, "Execution complete");
+        break;
+       }
+       ros::Duration(1.0).sleep();
+      }
     }
     else
     {

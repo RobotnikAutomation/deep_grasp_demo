@@ -11,9 +11,9 @@ image_geometry_filename = 0
 #   hand_height: the height of the hand
 #   init_bite: the minimum amount of the object to be covered by the hand
 # Panda (Visual approximation)
-finger_width = 0.01
+finger_width = 0.015
 hand_outer_diameter = 0.12
-hand_depth = 0.06
+hand_depth = 0.075
 hand_height = 0.02
 init_bite = 0.01
 
@@ -24,13 +24,13 @@ init_bite = 0.01
 #   image_size: the size of the image (width and height; image is square)
 #   image_num_channels: the number of image channels
 volume_width = 0.10
-volume_depth = 0.06
+volume_depth = 0.085
 volume_height = 0.02
 image_size = 60
 image_num_channels = 15
 
 # Path to directory that contains neural network parameters
-weights_file = /home/bostoncleek/GPD/gpd/models/lenet/15channels/params/
+weights_file = /home/maria/PROJECTS/deep_learning_ws/src/gpd/models/lenet/15channels/params/
 
 # Preprocessing of point cloud
 #   voxelize: if the cloud gets voxelized/downsampled
@@ -40,8 +40,8 @@ weights_file = /home/bostoncleek/GPD/gpd/models/lenet/15channels/params/
 #   sample_above_plane: only draws samples which do not belong to the table plane
 voxelize = 1
 voxel_size = 0.003
-remove_outliers = 0
-workspace = -1.0 1.0 -1.0 1.0 -1.0 1.0
+remove_outliers = 1
+workspace = -2.0 2.0 -2.0 2.0 -2.0 2.0
 # workspace = -2.0 2.0 -2.0 2.0 -2.0 2.0
 camera_position = 0 0 0
 # camera_position = 0.15 0 0.04
@@ -66,8 +66,8 @@ deepen_hand = 1
 #   max_aperture: the maximum gripper width
 #   workspace_grasps: dimensions of a cube centered at origin of point cloud; should be smaller than <workspace>
 min_aperture = 0.0
-max_aperture = 0.85
-workspace_grasps = -1 1 -1 1 -1 1
+max_aperture = 0.10
+workspace_grasps = -1.5 1.5 -1.5 1.5 -1.5 1.5
 # workspace_grasps = -2 2 -2 2 -2 2
 
 
@@ -82,7 +82,7 @@ thresh_rad = 2.0
 
 # Clustering of grasps
 #   min_inliers: minimum number of inliers per cluster; set to 0 to turn off clustering
-min_inliers = 1
+min_inliers = 0
 
 # Grasp selection
 #   num_selected: number of selected grasps (sorted by score)

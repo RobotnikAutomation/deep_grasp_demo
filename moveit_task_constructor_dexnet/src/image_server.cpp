@@ -95,7 +95,24 @@ bool ImageServer::saveCallback(moveit_task_constructor_dexnet::Images::Request& 
 bool ImageServer::saveImage(const sensor_msgs::Image::ConstPtr& msg, const std::string& image_name)
 {
   cv_bridge::CvImagePtr cv_ptr;
+
+/*   if (msg->encoding == "16UC1"){
+    //std::cout << msg->encoding << std::endl;
+    //cv_ptr = cv_bridge::toCvCopy(msg, "32FC1"); 
+
+    cv_ptr = cv_bridge::toCvCopy(msg, msg->encoding);         
+    cv::Mat cv_frame32;
+    cv_ptr->image.convertTo(cv_frame32, CV_32F, 0.001);
+    sensor_msgs::ImagePtr msg_rect = cv_bridge::CvImage(std_msgs::Header(), sensor_msgs::image_encodings::TYPE_32FC1, cv_frame32).toImageMsg();
+    std::cout << msg_rect->encoding << std::endl;
+    cv_ptr = cv_bridge::toCvCopy(msg_rect, msg_rect->encoding);
+  }else{
+    cv_ptr = cv_bridge::toCvCopy(msg, msg->encoding);
+  } */
+
   cv_ptr = cv_bridge::toCvCopy(msg, msg->encoding);
+
+
 
   // imwrite() saves image as BGR
   cv::Mat img_converted;
@@ -107,6 +124,12 @@ bool ImageServer::saveImage(const sensor_msgs::Image::ConstPtr& msg, const std::
   else if (msg->encoding == "32FC1")
   {
     cv_ptr->image.convertTo(img_converted, CV_8UC3, 255.0);  // conver to BGR and scale
+  }
+  else if (msg->encoding == "16UC1")
+  {
+    cv::Mat cv_frame32;
+    cv_ptr->image.convertTo(cv_frame32, CV_32F, 0.001);
+    cv_frame32.convertTo(img_converted, CV_8UC3, 255.0);  // conver to BGR and scale
   }
   else
   {

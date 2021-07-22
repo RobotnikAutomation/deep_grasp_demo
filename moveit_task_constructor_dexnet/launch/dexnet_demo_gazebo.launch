@@ -21,7 +21,7 @@
   <arg if="$(arg load_images)" name="depth_image_file" value="depth_clamp.png" doc="depth image file"/> -->
 
   <arg unless="$(arg load_images)" name="color_img_topic" value="/camera/color/image_raw" doc="topic name for raw color image"/>
-  <arg unless="$(arg load_images)" name="depth_img_topic" value="/camera/depth/image_rect" doc="topic name for raw depth image"/>
+  <arg unless="$(arg load_images)" name="depth_img_topic" value="/camera/depth/image_raw" doc="topic name for raw depth image"/>
 
   <!-- Run MTC pick and place -->
   <node name="mtc_tutorial" pkg="deep_grasp_task" type="deep_grasp_demo" output="screen">

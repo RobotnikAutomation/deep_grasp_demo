@@ -62,7 +62,7 @@ void GraspDetection::loadParameters()
 
   size_t errors = 0;
 
-  errors += !rosparam_shortcuts::get(LOGNAME, pnh, "point_cloud_topic", point_cloud_topic_);
+  errors += !rosparam_shortcuts::get(LOGNAME, pnh, "input_pcl_topic", point_cloud_topic_);
   errors += !rosparam_shortcuts::get(LOGNAME, pnh, "path_to_gpd_config", path_to_gpd_config_);
   errors += !rosparam_shortcuts::get(LOGNAME, pnh, "action_name", action_name_);
   errors += !rosparam_shortcuts::get(LOGNAME, pnh, "view_point", view_point_);
@@ -92,7 +92,7 @@ void GraspDetection::init()
   cloud_sub_ = nh_.subscribe(point_cloud_topic_, 1, &GraspDetection::cloudCallback, this);
 
   // Set up publisher to debug point cloud sent to GPD algorithm
-  cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("segmented_cloud", 1, true);
+  cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("gpd_debug_pcl", 1, true);
 
   // Grasp detector
   grasp_detector_.reset(new gpd::GraspDetector(path_to_gpd_config_));

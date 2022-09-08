@@ -58,7 +58,7 @@ void removeTable(PointCloudRGB::Ptr cloud)
 
   // Max iterations and model tolerance
   segmentor.setMaxIterations(1000);
-  segmentor.setDistanceThreshold(0.01);
+  segmentor.setDistanceThreshold(0.08);
 
   // Input cloud
   segmentor.setInputCloud(cloud);

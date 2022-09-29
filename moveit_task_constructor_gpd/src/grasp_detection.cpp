@@ -169,7 +169,7 @@ void GraspDetection::sampleGrasps()
     grasp_pose.header.frame_id = frame_id_;
     grasp_pose.pose.position.x = trans.x();
     grasp_pose.pose.position.y = trans.y();
-    grasp_pose.pose.position.z = trans.z();
+    grasp_pose.pose.position.z = trans.z()-0.04;
 
     grasp_pose.pose.orientation.w = rot.w();
     grasp_pose.pose.orientation.x = rot.x();
@@ -199,6 +199,7 @@ void GraspDetection::cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg
     if (remove_table_)
     {
       removeTable(cloud);
+     
     }
 
     // Filter cloud 
@@ -212,6 +213,7 @@ void GraspDetection::cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg
     sensor_msgs::PointCloud2 cloud_msg;
     pcl::toROSMsg(*cloud.get(), cloud_msg);
     cloud_pub_.publish(cloud_msg);
+
 
     // TODO: set alpha channel to 1
     // GPD required XYZRGBA
